@@ -1,0 +1,43 @@
+services:
+  ackermann_sim_1:
+    # gazebo installation for the robot
+    image: alitekes1/ackermann_sim_1:latest
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      args:
+        ROS_DISTRO: jazzy
+        GZ_VERSION: harmonic
+    runtime: nvidia
+    working_dir: /root/colcon_ws
+    shm_size: 2gb
+    devices:
+      - /dev/dxg:/dev/dxg
+    environment: 
+      - PYTHONUNBUFFERED=1 # important to show error messages if a ros service crashes!
+      - DISPLAY # for UI
+      - QT_X11_NO_MITSHM=1 #fix some QT bugs
+      - NVIDIA_VISIBLE_DEVICES=all # for docker-nvidia2
+      - NVIDIA_DRIVER_CAPABILITIES=all # for docker-nvidia2
+      - XDG_RUNTIME_DIR 
+      - __NV_PRIME_RENDER_OFFLOAD=1
+      - __GLX_VENDOR_LIBRARY_NAME=nvidia
+      - LIBGL_ALWAYS_INDIRECT=0
+      - XAUTHORITY=$XAUTHORITY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # for UI
+      - /run/user:/run/user:ro  # for UI
+      - /usr/lib/wsl/lib:/usr/lib/wsl/lib:ro
+      - /dev/dri:/dev/dri
+      - ./:/root/colcon_ws/src/ackermann-vehicle-gzsim-ros2:rw  # Mount source code for live editing
+    privileged: true  # for UI
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility, graphics, video]
+    container_name: ackermann_sim_1
+    stdin_open: true  # Keep STDIN open
+    tty: true  # Allocate a pseudo-TTY
