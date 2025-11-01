@@ -38,6 +38,7 @@ RUN apt-get update -qq \
         ros-${ROS_DISTRO}-image-transport \
         ros-${ROS_DISTRO}-nav2* \
         ros-${ROS_DISTRO}-behaviortree-cpp-v3 \
+        ros-${ROS_DISTRO}-teleop-twist-keyboard \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p ${COLCON_WS_SRC}
