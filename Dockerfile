@@ -28,6 +28,8 @@ RUN apt-get update -qq \
         libvulkan1 \
         mesa-utils \
         vulkan-tools \
+        graphicsmagick \
+        libgraphicsmagick++-dev \
         ros-${ROS_DISTRO}-rcl-interfaces \
         ros-${ROS_DISTRO}-rclcpp \
         ros-${ROS_DISTRO}-builtin-interfaces \

@@ -182,6 +182,81 @@ You can also run the simulation using Docker, which ensures a consistent environ
     ```bash
     ros2 launch saye_bringup slam.launch.py
     ```
+    
+    **Saving the Map:**
+    
+    After you've driven around and built a map, save it manually (SLAM does not auto-save when stopped):
+    
+    **⚠️ CRITICAL: Save the map WHILE SLAM is running!**
+    
+    The map only exists in memory while SLAM is active. If you stop SLAM first, the map will be lost!
+    
+    **Complete Workflow:**
+    1. **Terminal 1:** Start simulation → `ros2 launch saye_bringup saye_spawn.launch.py`
+    2. **Terminal 2:** Start SLAM → `ros2 launch saye_bringup slam.launch.py`
+    3. **Terminal 3:** Drive robot around → `ros2 run teleop_twist_keyboard teleop_twist_keyboard`
+    4. **Terminal 4:** Save map (WHILE SLAM IS STILL RUNNING):
+       ```bash
+       # Verify map is available
+       ros2 topic list | grep map
+       
+       # Save directly to mounted source directory (persists after container exits)
+       # Option 1: Save to source maps directory (recommended)
+       mkdir -p /root/colcon_ws/src/ackermann-vehicle-gzsim-ros2/saye_bringup/maps
+       ros2 run nav2_map_server map_saver_cli -f /root/colcon_ws/src/ackermann-vehicle-gzsim-ros2/saye_bringup/maps/my_map
+       
+       # Option 2: Save to /tmp (temporary, lost when container exits)
+       # mkdir -p /root/colcon_ws/maps
+       # ros2 run nav2_map_server map_saver_cli -f /root/colcon_ws/maps/my_map
+       ```
+       
+       **Important:** 
+       - Use Option 1 (source directory) - files will persist on your host machine
+       - The source code directory is volume-mounted, so files saved there are permanent
+       - After saving, update the YAML file name (see below)
+       
+       **If you get a file write error:**
+       - Make sure GraphicsMagick is installed: `apt-get install -y graphicsmagick libgraphicsmagick++-dev`
+       - Check directory exists: `ls -la /root/colcon_ws/src/ackermann-vehicle-gzsim-ros2/saye_bringup/maps`
+       - Check permissions: `chmod 755 /root/colcon_ws/src/ackermann-vehicle-gzsim-ros2/saye_bringup/maps`
+    5. After saving completes successfully, you can stop SLAM
+    
+    **Using Your SLAM Map for Navigation:**
+    
+    After saving your SLAM map (using Option 1 above), rename it to be the default map:
+    ```bash
+    # From inside container (after saving with Option 1)
+    cd /root/colcon_ws/src/ackermann-vehicle-gzsim-ros2/saye_bringup/maps
+    
+    # Rename your SLAM map to be the default map
+    mv my_map.pgm map.pgm
+    mv my_map.yaml map.yaml
+    
+    # Update the YAML file to reference map.pgm (instead of my_map.pgm)
+    sed -i 's/image: my_map.pgm/image: map.pgm/' map.yaml
+    ```
+    
+    **Or from host machine:**
+    ```bash
+    # Navigate to your project directory
+    cd ~/sim2/src/ackermann-vehicle-gzsim-ros2/saye_bringup/maps
+    
+    # Rename files and update YAML in one go
+    mv my_map.pgm map.pgm
+    mv my_map.yaml map.yaml
+    sed -i 's/image: my_map.pgm/image: map.pgm/' map.yaml
+    ```
+    
+    Now when you run navigation, it will automatically use your SLAM-generated map!
+    
+    > **Important Notes:** 
+    > - ✅ **DO:** Save while SLAM is running
+    > - ❌ **DON'T:** Stop SLAM before saving (map will be lost!)
+    > - The map topic `/map` must exist and be publishing
+    > - Move the robot around first to give SLAM data to work with
+    > - After saving, you'll have: `my_map.pgm` (image) and `my_map.yaml` (metadata)
+    > - The old warehouse map has been removed - you'll need to create your own map with SLAM
+    
     [![SLAM- Youtube](https://img.youtube.com/vi/QWcJ9TlqFOU/0.jpg)](https://www.youtube.com/watch?v=QWcJ9TlqFOU "Proje Tanıtımı")
 
 ### 3. Navigation with Nav2
